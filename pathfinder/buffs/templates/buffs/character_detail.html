@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block contents %}
+
+{{ object }}
+
+<table class="pure-table">
+<tbody>
+{% for name, value, notes in object.stats %}
+<tr>
+<td>{{ name }}</td>
+<td>{{ value }}</td>
+<td>{{ notes }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock %}

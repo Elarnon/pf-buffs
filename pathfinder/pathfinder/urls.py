@@ -16,6 +16,10 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 
+from buffs.views import CharacterView, CharacterListView
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'^character/(?P<pk>[0-9]+)/$', CharacterView.as_view(), name='character-detail'),
+    url(r'^character/$', CharacterListView.as_view(), name='character-list'),
 ]
