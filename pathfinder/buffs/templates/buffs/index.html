@@ -1,103 +1,128 @@
 {% extends "base.html" %}
 
 {% block contents %}
-<table style="text-align: center;" class="pure-table pure-table-horizontal">
-  <colgroup>
-    <col style="border-right: 1px solid #cbcbcb;">
-  {% for character in characters %}
-    {% if request.user in character.players.all %}
-      <col style="background-color: #f2f2f2;">
-    {% else %}
-      <col>
-    {% endif %}
-  {% endfor %}
-  </colgroup>
-  <thead>
-    <tr>
-      <th>Stat</th>
-  {% for character in characters %}
-      <th>{{ character.name }}
-      {% if request.user in character.players.all %}
-	<button class="pure-button pure-button-primary" style="font-size: x-small" type="submit" name="end-turn-{{ character.id }}">Terminer le tour</button></th>
-      {% endif %}
-  {% endfor %}
-    </tr>
-  </thead>
-  <tbody>
-  <tr>
-    <td>Effets actifs</td>
-  {% for chr in buffs %}
-    <td style="border-right: 1px solid #cbcbcb;">
-      {% for buff in chr %}
-      {% if not forloop.first %}; {% endif %}
-      <abbr title="{{ buff.description }}">{{ buff }}</abbr>
-      {% endfor %}
-    </td>
-  {% endfor %}
-  </tr>
-  {% for name, stat in stats %}
-    <tr>
-      <td rowspan="2">{{ name }}</td>
-      {% for chr in stat %}
-      <td {% if not chr.additional %}rowspan="2"{%endif%} style="{% if chr.additional %}border-bottom: none; {%endif %}border-right: 1px solid #cbcbcb;">
-	{% if chr.value %}
-	<abbr title="{{ chr.detail }}">{{ chr.value }}</abbr>
+<div class="pure-u-1">
+  <div style="padding: 5px;">
+    <table style="width: 100%; text-align: center;" class="pure-table pure-table-horizontal">
+      <colgroup>
+	<col style="border-right: 1px solid #cbcbcb;">
+	{% for character in characters %}
+	{% if request.user in character.players.all %}
+	<col style="background-color: #f2f2f2;">
 	{% else %}
-	+0
+	<col>
 	{% endif %}
-      </td>
-      {% endfor %}
-    </tr>
-    <tr>
-      {% for chr in stat %}
-      {% if chr.additional %}
-      <td style="font-size: small; font-style: italic; border-right: 1px solid #cbcbcb;">
-	{{ chr.additional }}
-      </td>
-      {% endif %}
-      {% endfor %}
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
+	{% endfor %}
+      </colgroup>
+      <thead>
+	<tr>
+	  <th>Stat</th>
+	  {% for character in characters %}
+	  <th>{{ character.name }}
+	    <!-- {% if request.user in character.players.all %}
+	    <button class="pure-button pure-button-primary" style="font-size: x-small" type="submit" name="end-turn-{{ character.id }}">Terminer le tour</button></th>
+	  {% endif %} -->
+	  {% endfor %}
+	</tr>
+      </thead>
+      <tbody>
+	<tr>
+	  <td>Effets actifs</td>
+	  {% for chr in buffs %}
+	  <td style="border-right: 1px solid #cbcbcb;">
+	    {% for buff in chr %}
+	    {% if not forloop.first %}; {% endif %}
+	    <abbr title="{{ buff.description }}">{{ buff }}</abbr>
+	    {% endfor %}
+	  </td>
+	  {% endfor %}
+	</tr>
+	{% for name, stat in stats %}
+	<tr>
+	  <td rowspan="2">{{ name }}</td>
+	  {% for chr in stat %}
+	  <td {% if not chr.additional %}rowspan="2"{%endif%} style="{% if chr.additional %}border-bottom: none; {%endif %}border-right: 1px solid #cbcbcb;">
+	    {% if chr.value %}
+	    <abbr title="{{ chr.detail }}">{{ chr.value }}</abbr>
+	    {% else %}
+	    +0
+	    {% endif %}
+	  </td>
+	  {% endfor %}
+	</tr>
+	<tr>
+	  {% for chr in stat %}
+	  {% if chr.additional %}
+	  <td style="font-size: small; font-style: italic; border-right: 1px solid #cbcbcb;">
+	    {{ chr.additional }}
+	  </td>
+	  {% endif %}
+	  {% endfor %}
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
-<form method="post" action="">
-{% csrf_token %}
-{{ buffs_formset.management_form }}
-<table class="pure-table">
-  <thead>
-    <tr>
-{% for form in buffs_formset.forms %}
-  {% if forloop.first %}
-    {% for field in form %}
-      {% if not field.is_hidden %}
-      <th>{{ field.label }}</th>
-      {% endif %}
-    {% endfor %}
-    </tr>
-  </thead>
-  <tbody>
-  {% endif %}
-    <tr>
-      <td>
-  {% for field in form %}
-    {% if field.is_hidden %} {{ field }} {% else %}{% if not forloop.first %}</td> <td>{%endif%} {{ field }}{% endif %}
-  {% endfor %}
-      </td>
-    </tr>
-{% endfor %}
-  </tbody>
-</table>
-<button type="submit">GO</button>
-</form>
+<div class="pure-u-1">
+  <div class="pure-g">
+    <div class="pure-u-1-2">
+      <div style="padding: 5px;">
+	<form method="post">
+	  {% csrf_token %}
+	  {{ buffs_formset.management_form }}
+	  <table style="width: 100%;" class="pure-table pure-table-horizontal">
+	    <thead>
+	      <tr>
+		{% for form in buffs_formset.forms %}
+		{% if forloop.first %}
+		{% for field in form %}
+		{% if not field.is_hidden %}
+		<th>{{ field.label }}</th>
+		{% endif %}
+		{% endfor %}
+	      </tr>
+	    </thead>
+	    <tbody>
+	      {% endif %}
+	      <tr>
+		<td>
+		  {% for field in form %}
+		  {% if field.is_hidden %} {{ field }} {% else %}{% if not forloop.first %}</td> <td>{%endif%} {{ field }}{% endif %}
+		  {% endfor %}
+		</td>
+	      </tr>
+	      {% endfor %}
+	    </tbody>
+	  </table>
+	  <button type="submit" class="pure-button pure-button-primary" style="width: 100%;">Enregistrer</button>
+	</form>
+      </div>
+    </div>
 
-<table class="pure-table">
-  {% for source in sources %}
-  {% with source.bonus_set.all as bonuses %}
-  <tr>
-    <td>{{ source }}</td>
-  </tr>
-  {% endwith %}
-  {% endfor %}
-</table>
+
+    <div class="pure-u-1-2">
+      <div style="padding: 5px;">
+	<table style="width: 100%;" class="pure-table pure-table-striped">
+	  <thead>
+	    <tr>
+	      <th colspan="3">Récapitulatif</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	    {% for source in sources %}
+	    <tr>
+	      <td style="font-style: italic;">
+		{{ source }}
+	      </td>
+	      <td>{{ source.description }}</td>
+	    </tr>
+	    {% endfor %}
+	  </tbody>
+	</table>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

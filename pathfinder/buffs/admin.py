@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import BonusType, Stat, Constraint, Source, Bonus, Character, Buff, Group
+from .models import BonusType, Stat, Constraint, Source, Bonus, Character, Buff
 
 class BonusInline(admin.TabularInline):
     model = Bonus
@@ -23,5 +23,4 @@ admin.site.register(Constraint, ConstraintAdmin)
 admin.site.register(Stat, StatAdmin)
 admin.site.register(Source, SourceAdmin)
 admin.site.register(Character, CharacterAdmin)
-admin.site.register(Group)
 admin.site.register(Buff)

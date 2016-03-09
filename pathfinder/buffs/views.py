@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.views.generic import DetailView, ListView
 from django.utils.functional import curry
 
-from .models import Character, Buff, Group, Source
+from .models import Character, Buff, Source
 from django.db.models import Q
 
 from .forms import BuffForm, BaseBuffFormSet
@@ -28,12 +28,13 @@ class CharacterListView(ListView):
 def index(request):
     characters = Character.objects.all()
 
-    BuffFormSet = forms.modelformset_factory(Buff, fields=('source', 'group', 'duration', 'active'), formset=BaseBuffFormSet)
+    BuffFormSet = forms.modelformset_factory(Buff, fields=('source', 'characters', 'duration', 'active'), formset=BaseBuffFormSet, can_delete=True)
 
     if request.method == 'POST':
         formset = BuffFormSet(request.POST, request.FILES, user=request.user)
         if formset.is_valid():
             formset.save()
+            formset = BuffFormSet(user=request.user)
     else:
         formset = BuffFormSet(user=request.user)
     
@@ -51,10 +52,24 @@ def index(request):
 
     buffs = [character.buffs() for character in characters]
 
+    names = set()
+    sources = Source.objects.all()
+    for source in sources:
+        source.cached_stats = {
+            stat['name']: stat for stat in source.stats()
+        }
+        names |= source.cached_stats.keys()
+
+    source_stats = [
+        (name, [source.cached_stats.get(name, None) for source in sources])
+        for name in sorted(names)
+    ]
+
     return render(request, 'buffs/index.html', {
         'stats': stats,
         'buffs': buffs,
         'characters': characters,
         'buffs_formset': formset,
-        'sources': Source.objects.all(),
+        'sources': sources,
+        'source_stats': source_stats
     })

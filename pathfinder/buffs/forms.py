@@ -8,7 +8,7 @@ from .models import Character, Source, Buff
 class BuffForm(forms.ModelForm):
     class Meta:
         model = Buff
-        fields = ('source', 'group', 'duration', 'active')
+        fields = ('source', 'characters', 'duration', 'active')
 
     def __init__(self, *args, **kwargs):
         sources = kwargs.pop('sources')
