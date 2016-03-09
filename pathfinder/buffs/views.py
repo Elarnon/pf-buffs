@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.views.generic import DetailView, ListView
 from django.utils.functional import curry
 
-from .models import Character, Buff, Group
+from .models import Character, Buff, Group, Source
 from django.db.models import Q
 
 from .forms import BuffForm, BaseBuffFormSet
@@ -40,7 +40,7 @@ def index(request):
     names = set()
     for character in characters:
         character.cached_stats = {
-            stat['name']: stat for stat in character.stats()
+            stat['name']: stat for stat in character.stats(pr=True)
         }
         names |= character.cached_stats.keys()
 
@@ -56,4 +56,5 @@ def index(request):
         'buffs': buffs,
         'characters': characters,
         'buffs_formset': formset,
+        'sources': Source.objects.all(),
     })

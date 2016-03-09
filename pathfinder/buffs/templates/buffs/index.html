@@ -27,10 +27,11 @@
   <tr>
     <td>Effets actifs</td>
   {% for chr in buffs %}
-    <td style="border-right: 1px solid #cbcbcb;">{{ chr|join:', ' }}
-    {% for buff in chr %}
-      
-    {% endfor %}
+    <td style="border-right: 1px solid #cbcbcb;">
+      {% for buff in chr %}
+      {% if not forloop.first %}; {% endif %}
+      <abbr title="{{ buff.description }}">{{ buff }}</abbr>
+      {% endfor %}
     </td>
   {% endfor %}
   </tr>
@@ -71,7 +72,6 @@
     {% for field in form %}
       {% if not field.is_hidden %}
       <th>{{ field.label }}</th>
-      {% else %}<th></th>
       {% endif %}
     {% endfor %}
     </tr>
@@ -79,13 +79,25 @@
   <tbody>
   {% endif %}
     <tr>
+      <td>
   {% for field in form %}
-    <td>{{ field }}</td>
+    {% if field.is_hidden %} {{ field }} {% else %}{% if not forloop.first %}</td> <td>{%endif%} {{ field }}{% endif %}
   {% endfor %}
+      </td>
     </tr>
 {% endfor %}
   </tbody>
 </table>
 <button type="submit">GO</button>
 </form>
+
+<table class="pure-table">
+  {% for source in sources %}
+  {% with source.bonus_set.all as bonuses %}
+  <tr>
+    <td>{{ source }}</td>
+  </tr>
+  {% endwith %}
+  {% endfor %}
+</table>
 {% endblock %}
