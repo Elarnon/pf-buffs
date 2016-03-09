@@ -13,6 +13,7 @@
 	<col>
 	{% endif %}
 	{% endfor %}
+	<col style="border-right: 1px solid #cbcbcb;">
       </colgroup>
       <thead>
 	<tr>
@@ -36,8 +37,8 @@
 	    <abbr title="{{ buff.description }}">{{ buff }}</abbr>
 	    {% endfor %}
 	  </td>
-	  <th>Effets actifs</td>
 	  {% endfor %}
+	  <th>Effets actifs</th>
 	</tr>
 	{% for name, stat in stats %}
 	<tr>
