@@ -20,7 +20,6 @@
 	  {% for character in characters %}
 	  <tr>
 	    <td>{{ character.name }}
-
 	      {% if request.user in character.players.all %}
 	      <button class="pure-button pure-button-primary" style="font-size: x-small" type="submit" name="end-turn" value="{{ character.id }}">Terminer le tour</button>
 	      {% endif %}
@@ -30,11 +29,13 @@
 	      {% for name, stat in character.stats %}
 	      {% if not forloop.first %}; {% endif %}
 	      {{ name }}
-	      <abbr title="{% for name, value in stat.detail %}{% if value > 0 %}+{% endif %}{{ value }} {{name}}{% endfor %}">{% if stat.value > 0 %}+{{ stat.value }}{% else %}{{ stat.value }}{% endif %}</abbr>
+	      {% if stat.value != 0 %}
+	      <abbr title="{% for name, value in stat.detail %}{% if value >= 0 %}+{% endif %}{{ value }} {{name}}{% endfor %}">{% if stat.value >= 0 %}+{{ stat.value }}{% else %}{{ stat.value }}{% endif %}</abbr>
+	      {% endif %}
 	      {% if stat.constraints %}
-	      ({% for constraint, value, detail in stat.constraints %}{% if not forloop.first %}, {% endif %}<abbr
-														title="{% for name, value in detail %}{% if value > 0 %}+{% endif %}{{ value }} {{name }}{% endfor %}">{% if value > 0%}+{% endif %}{{ value }}</abbr>
-	      {{ constraint }}{% endfor %})
+	      {% if stat.value != 0 %}({% endif %}{% for constraint, value, detail in stat.constraints %}{% if not forloop.first %}, {% endif %}<abbr
+														title="{% for name, value in detail %}{% if value >= 0 %}+{% endif %}{{ value }} {{name }}{% endfor %}">{% if value >= 0%}+{% endif %}{{ value }}</abbr>
+	      {{ constraint }}{% endfor %}{% if stat.value != 0 %}){% endif %}
 	      {% endif %}
 	      {% endfor %}
 	    </td>
