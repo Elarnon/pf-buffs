@@ -89,7 +89,7 @@ def make_stats(qs, undead=False):
         stat_values[stat['name']] = {
             'value': sum(typed_value['value'] for typed_value in typed_values.values()),
             'constraints': sorted([
-                (k, v)
+                (k, sum(x[1] for x in v), v)
                 for k, v in [
                     (constraint,
                         sorted([(name or '', typed_value['constraints'].get(constraint, 0))
@@ -105,6 +105,20 @@ def make_stats(qs, undead=False):
 
     return stat_values
 
+def format_stats_new(stat_values):
+    return [
+        {
+            'name': k,
+            'value': '{:+}'.format(v['value']) if v['value'] != 0 else None,
+            'detail': ' '.join('{:+} {}'.format(detail[1], '[{}]'.format(detail[0]) if detail[0] else '') for detail in v['detail']).strip()or None,
+            'constraints': [
+                (constraint[0], ' '.join('{:+} {}'.format(detail[1], '[{}]'.format(detail[0]) if detail[0] else '') for detail in constraint[1]).strip())
+                for constraint in v['constraints']
+            ]
+        }
+        for k, v in stat_values.items()
+    ]
+
 def format_stats(stat_values):
     return [
         {
@@ -114,7 +128,7 @@ def format_stats(stat_values):
             'additional':
                 mark_safe('; '.join(
                     ' '.join(
-                        '{:+}&nbsp;[{}]'.format(x[1], x[0]) if x[0] else '{:+}'.format(x[1]) for x in constraint[1])
+                        '{:+}&nbsp;[{}]'.format(x[1], x[0]) if x[0] else '{:+}'.format(x[1]) for x in constraint[2])
                     + ' ' + constraint[0]
                 for constraint in v['constraints']))
         }
@@ -195,8 +209,8 @@ class Character(models.Model):
     def raw_stats(self):
         return make_stats(Buff.objects.filter(source__bonus__isnull=False, active=True, characters=self), undead=self.undead)
 
-    def stats(self, pr=False):
-        return format_stats(self.raw_stats())
+    def stats(self):
+        return sorted(self.raw_stats().items(), key=lambda x: x[0])
 
     def end_turn(self):
         Buff.objects.filter(active=True, source__author=self, duration__lte=0).update(active=False)

@@ -1,61 +1,48 @@
 {% extends "base.html" %}
 
 {% block contents %}
+
+
 <form method="post">
   {% csrf_token %}
+
   <div class="pure-u-1">
     <div style="padding: 5px;">
-      <table style="table-layout: fixed; width: 100%; text-align: center;" class="pure-table pure-table-horizontal">
-	<colgroup>
-	  {% for character in characters %}
-	  {% if request.user in character.players.all %}
-	  <col style="background-color: #f2f2f2;">
-	  {% else %}
-	  <col>
-	  {% endif %}
-	  {% endfor %}
-	</colgroup>
+      <table style="width: 100%;" class="pure-table pure-table-striped">
 	<thead>
 	  <tr>
-	    {% for character in characters %}
-	    <th>{{ character.name }}
-	      {% if request.user in character.players.all %}
-	      <button class="pure-button pure-button-primary" style="font-size: x-small" type="submit" name="end-turn" value="{{ character.id }}">Terminer le tour</button>
-	      {% endif %}</th>
-	    {% endfor %}
+	    <th>Personnage</th>
+	    <th>Modificateurs</th>
+	    <th>Effets actifs</th>
 	  </tr>
 	</thead>
 	<tbody>
+	  {% for character in characters %}
 	  <tr>
-	    {% for chr in buffs %}
-	    <td style="border-right: 1px solid #cbcbcb;">
-	      {% for buff in chr %}
+	    <td>{{ character.name }}
+
+	      {% if request.user in character.players.all %}
+	      <button class="pure-button pure-button-primary" style="font-size: x-small" type="submit" name="end-turn" value="{{ character.id }}">Terminer le tour</button>
+	      {% endif %}
+	    </td>
+
+	    <td>
+	      {% for name, stat in character.stats %}
+	      {% if not forloop.first %}; {% endif %}
+	      {{ name }}
+	      <abbr title="{% for name, value in stat.detail %}{% if value > 0 %}+{% endif %}{{ value }} {{name}}{% endfor %}">{% if stat.value > 0 %}+{{ stat.value }}{% else %}{{ stat.value }}{% endif %}</abbr>
+	      {% if stat.constraints %}
+	      ({% for constraint, value, detail in stat.constraints %}{% if not forloop.first %}, {% endif %}<abbr
+														title="{% for name, value in detail %}{% if value > 0 %}+{% endif %}{{ value }} {{name }}{% endfor %}">{% if value > 0%}+{% endif %}{{ value }}</abbr>
+	      {{ constraint }}{% endfor %})
+	      {% endif %}
+	      {% endfor %}
+	    </td>
+	    <td>{% for buff in character.buffs %}
 	      {% if not forloop.first %}; {% endif %}
 	      <abbr title="{{ buff.description }}">{{ buff }}</abbr>
 	      {% endfor %}
 	    </td>
-	    {% endfor %}
-	  </tr>
-	  {% for name, stat in stats %}
-	  <tr>
-	    {% for chr in stat %}
-	    <td {% if not chr.additional %}rowspan="2"{%endif%} style="{% if chr.additional %}border-bottom: none; {%endif %}border-right: 1px solid #cbcbcb;">
-	      {% if chr.value %}
-	      <abbr title="{{ chr.detail }}">{{ name }} {{ chr.value }}</abbr>
-	      {% else %}
-	      {{ name }} +0
-	      {% endif %}
-	    </td>
-	    {% endfor %}
-	  </tr>
-	  <tr>
-	    {% for chr in stat %}
-	    {% if chr.additional %}
-	    <td style="font-size: small; font-style: italic; border-right: 1px solid #cbcbcb;">
-	      {{ chr.additional }}
-	    </td>
-	    {% endif %}
-	    {% endfor %}
 	  </tr>
 	  {% endfor %}
 	</tbody>

@@ -49,20 +49,6 @@ def index(request):
             formset = BuffFormSet(user=request.user)
     else:
         formset = None
-        
-    names = set()
-    for character in characters:
-        character.cached_stats = {
-            stat['name']: stat for stat in character.stats(pr=True)
-        }
-        names |= character.cached_stats.keys()
-
-    stats = [
-        (name, [character.cached_stats.get(name, None) for character in characters])
-        for name in sorted(names)
-    ]
-
-    buffs = [character.buffs() for character in characters]
 
     names = set()
     sources = Source.objects.all()
@@ -78,8 +64,6 @@ def index(request):
     ]
 
     return render(request, 'buffs/index.html', {
-        'stats': stats,
-        'buffs': buffs,
         'characters': characters,
         'buffs_formset': formset,
         'sources': sources,
