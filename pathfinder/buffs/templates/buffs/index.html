@@ -7,7 +7,6 @@
     <div style="padding: 5px;">
       <table style="table-layout: fixed; width: 100%; text-align: center;" class="pure-table pure-table-horizontal">
 	<colgroup>
-	  <col style="border-right: 1px solid #cbcbcb;">
 	  {% for character in characters %}
 	  {% if request.user in character.players.all %}
 	  <col style="background-color: #f2f2f2;">
@@ -15,23 +14,19 @@
 	  <col>
 	  {% endif %}
 	  {% endfor %}
-	  <col style="border-right: 1px solid #cbcbcb;">
 	</colgroup>
 	<thead>
 	  <tr>
-	    <th>Stat</th>
 	    {% for character in characters %}
 	    <th>{{ character.name }}
 	      {% if request.user in character.players.all %}
 	      <button class="pure-button pure-button-primary" style="font-size: x-small" type="submit" name="end-turn" value="{{ character.id }}">Terminer le tour</button>
 	      {% endif %}</th>
 	    {% endfor %}
-	    <th>Stat</th>
 	  </tr>
 	</thead>
 	<tbody>
 	  <tr>
-	    <th>Effets actifs</th>
 	    {% for chr in buffs %}
 	    <td style="border-right: 1px solid #cbcbcb;">
 	      {% for buff in chr %}
@@ -40,11 +35,9 @@
 	      {% endfor %}
 	    </td>
 	    {% endfor %}
-	    <th>Effets actifs</th>
 	  </tr>
 	  {% for name, stat in stats %}
 	  <tr>
-	    <th rowspan="2">{{ name }}</th>
 	    {% for chr in stat %}
 	    <td {% if not chr.additional %}rowspan="2"{%endif%} style="{% if chr.additional %}border-bottom: none; {%endif %}border-right: 1px solid #cbcbcb;">
 	      {% if chr.value %}
@@ -54,7 +47,6 @@
 	      {% endif %}
 	    </td>
 	    {% endfor %}
-	    <th rowspan="2">{{ name }}</th>
 	  </tr>
 	  <tr>
 	    {% for chr in stat %}
