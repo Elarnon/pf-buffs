@@ -3,7 +3,7 @@
 {% block contents %}
 <div class="pure-u-1">
   <div style="padding: 5px;">
-    <table style="width: 100%; text-align: center;" class="pure-table pure-table-horizontal">
+    <table style="table-layout: fixed; width: 100%; text-align: center;" class="pure-table pure-table-horizontal">
       <colgroup>
 	<col style="border-right: 1px solid #cbcbcb;">
 	{% for character in characters %}
@@ -27,7 +27,7 @@
       </thead>
       <tbody>
 	<tr>
-	  <td>Effets actifs</td>
+	  <th>Effets actifs</td>
 	  {% for chr in buffs %}
 	  <td style="border-right: 1px solid #cbcbcb;">
 	    {% for buff in chr %}
@@ -39,7 +39,7 @@
 	</tr>
 	{% for name, stat in stats %}
 	<tr>
-	  <td rowspan="2">{{ name }}</td>
+	  <th rowspan="2">{{ name }}</td>
 	  {% for chr in stat %}
 	  <td {% if not chr.additional %}rowspan="2"{%endif%} style="{% if chr.additional %}border-bottom: none; {%endif %}border-right: 1px solid #cbcbcb;">
 	    {% if chr.value %}
