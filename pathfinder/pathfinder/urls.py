@@ -23,5 +23,5 @@ urlpatterns = [
     url(r'^character/(?P<pk>[0-9]+)/$', CharacterView.as_view(), name='character-detail'),
     url(r'^character/$', CharacterListView.as_view(), name='character-list'),
     url(r'^buff/$', test),
-    url(r'^$', index),
+    url(r'^$', index, name='index'),
 ]

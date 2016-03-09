@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.core.urlresolvers import reverse
 from django.views.generic import DetailView, ListView
 from django.utils.functional import curry
 
@@ -35,7 +36,7 @@ def index(request):
             formset = BuffFormSet(request.POST, request.FILES, user=request.user)
             if formset.is_valid():
                 formset.save()
-                formset = BuffFormSet(user=request.user)
+                return redirect(reverse('index'))
         else:
             formset = BuffFormSet(user=request.user)
     else:
