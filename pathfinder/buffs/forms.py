@@ -19,6 +19,9 @@ class BaseBuffFormSet(forms.BaseModelFormSet):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        sources = Source.objects.filter(Q(author__in=user.character_set.all()) | Q(author__isnull=True))
+        if user is None or not user.is_authenticated():
+            sources = Source.objects.filter(Q(author__isnull=True))
+        else:
+            sources = Source.objects.filter(Q(author__in=user.character_set.all()) | Q(author__isnull=True))
         self.queryset = Buff.objects.filter(source__in=sources)
         self.form = curry(BuffForm, sources=sources)

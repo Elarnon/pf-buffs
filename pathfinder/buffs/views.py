@@ -30,14 +30,17 @@ def index(request):
 
     BuffFormSet = forms.modelformset_factory(Buff, fields=('source', 'characters', 'duration', 'active'), formset=BaseBuffFormSet, can_delete=True)
 
-    if request.method == 'POST':
-        formset = BuffFormSet(request.POST, request.FILES, user=request.user)
-        if formset.is_valid():
-            formset.save()
+    if request.user.is_authenticated():
+        if request.method == 'POST':
+            formset = BuffFormSet(request.POST, request.FILES, user=request.user)
+            if formset.is_valid():
+                formset.save()
+                formset = BuffFormSet(user=request.user)
+        else:
             formset = BuffFormSet(user=request.user)
     else:
-        formset = BuffFormSet(user=request.user)
-    
+        formset = None
+        
     names = set()
     for character in characters:
         character.cached_stats = {
