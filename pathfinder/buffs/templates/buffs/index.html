@@ -23,6 +23,7 @@
 	    <button class="pure-button pure-button-primary" style="font-size: x-small" type="submit" name="end-turn-{{ character.id }}">Terminer le tour</button></th>
 	  {% endif %} -->
 	  {% endfor %}
+	  <th>Stat</th>
 	</tr>
       </thead>
       <tbody>
@@ -60,6 +61,17 @@
 	  {% endfor %}
 	</tr>
 	{% endfor %}
+	<tr>
+	  <th>Effets actifs</td>
+	  {% for chr in buffs %}
+	  <td style="border-right: 1px solid #cbcbcb;">
+	    {% for buff in chr %}
+	    {% if not forloop.first %}; {% endif %}
+	    <abbr title="{{ buff.description }}">{{ buff }}</abbr>
+	    {% endfor %}
+	  </td>
+	  {% endfor %}
+	</tr>
       </tbody>
     </table>
   </div>
