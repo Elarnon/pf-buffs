@@ -198,6 +198,10 @@ class Character(models.Model):
     def stats(self, pr=False):
         return format_stats(self.raw_stats())
 
+    def end_turn(self):
+        Buff.objects.filter(active=True, source__author=self, duration__lte=0).update(active=False)
+        Buff.objects.filter(active=True, source__author=self, duration__gt=0).update(duration=F('duration')-1)
+
 class Buff(models.Model):
     characters = models.ManyToManyField(Character)
     source = models.ForeignKey(Source)

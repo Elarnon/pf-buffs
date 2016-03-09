@@ -3,6 +3,8 @@ from django.core.urlresolvers import reverse
 from django.views.generic import DetailView, ListView
 from django.utils.functional import curry
 
+from django.core.exceptions import ObjectDoesNotExist
+
 from .models import Character, Buff, Source
 from django.db.models import Q
 
@@ -36,6 +38,12 @@ def index(request):
             formset = BuffFormSet(request.POST, request.FILES, user=request.user)
             if formset.is_valid():
                 formset.save()
+                if 'end-turn' in request.POST:
+                    end_turn = int(request.POST['end-turn'])
+                    try:
+                        Character.objects.get(pk=end_turn).end_turn()
+                    except ObjectDoesNotExist:
+                        pass
                 return redirect(reverse('index'))
         else:
             formset = BuffFormSet(user=request.user)
