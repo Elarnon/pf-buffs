@@ -1,32 +1,27 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import BonusType, Stat, ConstrainedStat, Source, Bonus, Character, Buff
+from .models import BonusType, Stat, Constraint, Source, Bonus, Character, Buff, Group
 
 class BonusInline(admin.TabularInline):
     model = Bonus
 
-class BuffInline(admin.TabularInline):
-    model = Buff
-
 class SourceAdmin(admin.ModelAdmin):
-    inlines = (BonusInline, BuffInline)
+    inlines = (BonusInline,)
 
 class CharacterAdmin(admin.ModelAdmin):
-    inlines = (BuffInline,)
+    pass
 
-class ConstrainedStatAdmin(admin.ModelAdmin):
-    list_display = ('stat', 'name_fr')
-    list_editable = ('stat', 'name_fr')
-
-class ConstrainedStatInline(admin.TabularInline):
-    model = ConstrainedStat
+class ConstraintAdmin(admin.ModelAdmin):
+    pass
 
 class StatAdmin(admin.ModelAdmin):
-    inlines = (ConstrainedStatInline,)
+    pass
 
 admin.site.register(BonusType)
-admin.site.register(ConstrainedStat, ConstrainedStatAdmin)
+admin.site.register(Constraint, ConstraintAdmin)
 admin.site.register(Stat, StatAdmin)
 admin.site.register(Source, SourceAdmin)
 admin.site.register(Character, CharacterAdmin)
+admin.site.register(Group)
+admin.site.register(Buff)

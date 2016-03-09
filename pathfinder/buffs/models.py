@@ -18,53 +18,66 @@ class Stat(models.Model):
     def __str__(self):
         return self.name_fr
 
-class ConstrainedStat(models.Model):
+class Constraint(models.Model):
     name_fr = models.CharField(max_length=255, verbose_name="Nom (FR)", blank=True, null=False)
-    stat = models.ForeignKey(Stat)
-
-    class Meta:
-        unique_together = (
-            ('stat', 'name_fr'),
-        )
-
-    def __str__(self):
-        return '{} {}'.format(self.stat, self.name_fr)
-
-class Source(models.Model):
-    name_fr = models.CharField(max_length=255, verbose_name="Nom (FR)")
-    stats = models.ManyToManyField(ConstrainedStat, through='Bonus')
-    author = models.ForeignKey('Character', blank=True, null=True, verbose_name="Auteur")
-    level_dependent = models.BooleanField(default=False, verbose_name="Dépend du niveau")
 
     def __str__(self):
         return self.name_fr
 
+class Source(models.Model):
+    name_fr = models.CharField(max_length=255, verbose_name="Nom (FR)")
+    author = models.ForeignKey('Character', blank=True, null=True, verbose_name="Auteur")
+    level_dependent = models.BooleanField(default=False, verbose_name="Dépend du niveau")
+    stats = models.ManyToManyField(Stat, through='Bonus')
+
+    def __str__(self):
+        return self.name_fr + (' [{}]'.format(self.author) if self.author else '')
+
 class Bonus(models.Model):
     source = models.ForeignKey(Source)
-    stat = models.ForeignKey(ConstrainedStat, verbose_name="Attribut modifié")
+    stat = models.ForeignKey(Stat, verbose_name="Attribut modifié")
+    constraint = models.ForeignKey(Constraint, verbose_name="Contrainte", null=True, blank=True)
     typ = models.ForeignKey(BonusType, verbose_name="Type de bonus")
     value = models.IntegerField(verbose_name="Valeur")
 
+    class Meta:
+        unique_together = [
+            ('source', 'typ', 'stat', 'constraint'),
+        ]
+
 class Character(models.Model):
     name = models.CharField(max_length=255)
-    sources = models.ManyToManyField(Source, through='Buff')
     undead = models.BooleanField(default=False)
+    players = models.ManyToManyField('auth.User', blank=True)
 
     def __str__(self):
         return self.name + (" (undead)" if self.undead else "")
 
+    def buffs(self):
+        return Source.objects.filter(buff__active=True, buff__group__in=self.group_set.all())
+
     def stats(self):
-        grid = self.buff_set.values(
-            "source__bonus__stat", "source__bonus__typ").annotate(
-            value=Case(
-                When(source__bonus__typ__stacks=True, then=Sum("source__bonus__value")),
-                default=Max("source__bonus__value")),
-            stat=F("source__bonus__stat__stat__name_fr"),
-            stat_id=F("source__bonus__stat__stat"),
-            constraint=F("source__bonus__stat__name_fr"),
-            constraint_id=F("source__bonus__stat"),
+        grid = self.group_set.filter(buff__active=True).values(
+            "source__bonus__stat", "source__bonus__constraint", "source__bonus__typ").annotate(
+            bonus=Case(
+                When(source__bonus__typ__stacks=True, then=Sum(
+                    Case(
+                        When(source__bonus__value__gte=0, then=F("source__bonus__value")),
+                        default=0))),
+                default=Max(
+                    Case(
+                        When(source__bonus__value__gte=0, then=F("source__bonus__value")),
+                        default=0))),
+            malus=Sum(
+                Case(
+                    When(source__bonus__value__lt=0, then=F("source__bonus__value")),
+                    default=0)),
+            stat=F("source__bonus__stat__name_fr"),
+            stat_id=F("source__bonus__stat"),
+            constraint=F("source__bonus__constraint__name_fr"),
+            constraint_id=F("source__bonus__constraint"),
             typ=F("source__bonus__typ__name_fr")).values(
-            "value", "stat", "stat_id", "constraint", "constraint_id", "typ")
+            "bonus", "malus", "stat", "stat_id", "constraint", "constraint_id", "typ")
 
         stats = {}
         for elt in grid:
@@ -73,11 +86,12 @@ class Character(models.Model):
                 continue
             stat_id = elt['stat_id']
             if stat_id not in stats:
-                stats[stat_id] = { 'name': elt['stat'], 'value': 0, 'typs': {}, 'constraints': {} }
+                stats[stat_id] = { 'name': elt['stat'], 'bonus': 0, 'malus': 0, 'typs': {}, 'constraints': {} }
             stat = stats[stat_id]
 
-            if elt['constraint'] is '':
-                stat['value'] += elt['value']
+            if elt['constraint'] is None:
+                stat['bonus'] += elt['bonus']
+                stat['malus'] += elt['malus']
                 assert(elt['typ'] not in stat['typs'])
                 stat['typs'][elt['typ']] = elt
             else:
@@ -93,10 +107,15 @@ class Character(models.Model):
             for cid, constraint in stat['constraints'].items():
                 toremove = set()
                 for tid, typ in constraint['typs'].items():
-                    if tid in stat['typs'] and stat['typs'][tid]['value'] >= typ['value']:
-                        toremove.add(tid)
+                    if tid not in stat['typs']:
+                        continue
+                    typ['malus'] += stat['typs'][tid]['malus']
+                    if stat['typs'][tid]['bonus'] >= typ['bonus']:
+                        typ['bonus'] = 0
+                        if typ['malus'] == 0:
+                            toremove.add(tid)
                     else:
-                        typ['value'] -= stat['typs'][tid]['value']
+                        typ['bonus'] -= stat['typs'][tid]['bonus']
                 for tid in toremove:
                     del constraint['typs'][tid]
                 if len(constraint['typs']) == 0:
@@ -105,16 +124,35 @@ class Character(models.Model):
                 del stat['constraints'][cid]
 
         return [
-            (stat['name'], '{:+}'.format(stat['value']),
-            '; '.join(
-                ' '.join('{:+} [{}]'.format(elt['value'], elt['typ']) for elt in constraint['typs'].values())
-                + ' ' + constraint['name']
-                for constraint in stat['constraints'].values()
-            ))
+            {
+                'name': stat['name'],
+                'value':'{:+}'.format(stat['bonus'] + stat['malus']),
+                'additional': '; '.join(
+                    ' '.join('{:+} [{}]'.format(elt['value'], elt['typ']) for elt in constraint['typs'].values())
+                    + ' ' + constraint['name']
+                    for constraint in stat['constraints'].values()
+                ),
+                'detail': ' '.join(
+                    '{:+} {}'.format(elt['value'], elt['typ'])
+                    for elt in stat['typs'].values()
+                ),
+            }
             for stat in stats.values()
         ]
 
+class Group(models.Model):
+    name = models.CharField(max_length=255)
+    characters = models.ManyToManyField(Character)
+    source = models.ManyToManyField(Source, through='Buff')
+
+    def __str__(self):
+        return self.name
+
 class Buff(models.Model):
-    character = models.ForeignKey(Character)
+    group = models.ForeignKey(Group)
     source = models.ForeignKey(Source)
     duration = models.IntegerField(null=True)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return "{} sur {} ({} tours)".format(self.source, self.group, self.duration)

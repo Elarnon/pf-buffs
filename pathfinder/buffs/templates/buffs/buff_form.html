@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block contents %}
+{{ formset.management_form }}
+<table class="pure-table">
+  <thead>
+{% for form in formset.forms %}
+  {% if forloop.first %}
+    {% for field in form %}
+      {% if not field.is_hidden %}
+    <th>{{ field.label }}</th>
+      {% endif %}
+    {% endfor %}
+  </thead>
+  <tbody>
+  {% endif %}
+    <tr>
+  {% for field in form %}
+    {% if field.is_hidden %}
+    {{ field }}
+    {% else %}
+    <td>{{ field }}</td>
+    {% endif %}
+  {% endfor %}
+    </tr>
+{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

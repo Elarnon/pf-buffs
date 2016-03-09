@@ -6,11 +6,11 @@
 
 <table class="pure-table">
 <tbody>
-{% for name, value, notes in object.stats %}
+{% for stat in object.stats %}
 <tr>
-<td>{{ name }}</td>
-<td>{{ value }}</td>
-<td>{{ notes }}</td>
+<td>{{ stat.name }}</td>
+<td><abbr title="{{ stat.detail }}">{{ stat.value }}</abbr></td>
+<td>{{ stat.additional }}</td>
 </tr>
 {% endfor %}
 </tbody>
