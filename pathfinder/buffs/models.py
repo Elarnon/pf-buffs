@@ -103,6 +103,9 @@ def make_stats(qs, undead=False):
             'detail': sorted([(k or '', v['value']) for k, v in typed_values.items() if v['value'] != 0], key=lambda x: x[0])
         }
 
+    return stat_values
+
+def format_stats(stat_values):
     return [
         {
             'name': k,
@@ -146,8 +149,11 @@ class Source(models.Model):
     level_dependent = models.BooleanField(default=False, verbose_name="Dépend du niveau")
     stats = models.ManyToManyField(Stat, through='Bonus')
 
-    def stats(self):
+    def raw_stats(self):
         return make_stats(self.buff_set.filter(source__bonus__isnull=False, active=True))
+
+    def stats(self):
+        return format_stats(self.raw_stats())
 
     def description(self):
         return '; '.join(str(bonus) for bonus in self.bonus_set.all())
@@ -186,8 +192,11 @@ class Character(models.Model):
     def buffs(self):
         return Source.objects.filter(buff__active=True, buff__characters=self)
 
-    def stats(self, pr=False):
+    def raw_stats(self):
         return make_stats(Buff.objects.filter(source__bonus__isnull=False, active=True, characters=self))
+
+    def stats(self, pr=False):
+        return format_stats(self.raw_stats())
 
 class Buff(models.Model):
     characters = models.ManyToManyField(Character)
