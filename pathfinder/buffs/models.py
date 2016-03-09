@@ -193,7 +193,7 @@ class Character(models.Model):
         return Source.objects.filter(buff__active=True, buff__characters=self)
 
     def raw_stats(self):
-        return make_stats(Buff.objects.filter(source__bonus__isnull=False, active=True, characters=self))
+        return make_stats(Buff.objects.filter(source__bonus__isnull=False, active=True, characters=self), undead=self.undead)
 
     def stats(self, pr=False):
         return format_stats(self.raw_stats())
