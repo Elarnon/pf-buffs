@@ -53,12 +53,10 @@ def index(request):
     sources = Source.objects.select_related('author')
     source_stats = build_stats(sources)
 
-    characters = Character.objects.all().prefetch_related('buff_set', 'players')
+    characters = Character.objects.all().prefetch_related('buff_set', 'buff_set__source', 'buff_set__source__author', 'players')
 
     for character in characters:
         character.formatted_stats = character.make_stats(source_stats)
-        if character.name == 'Georges':
-            print(character.formatted_stats)
 
     for source in sources:
         source.formatted_stats = source.make_stats(source_stats)

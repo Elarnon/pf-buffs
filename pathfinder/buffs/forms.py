@@ -23,5 +23,6 @@ class BaseBuffFormSet(forms.BaseModelFormSet):
             sources = Source.objects.filter(Q(author__isnull=True))
         else:
             sources = Source.objects.filter(Q(author__in=user.character_set.all()) | Q(author__isnull=True))
+        sources = sources.select_related('author')
         self.queryset = Buff.objects.filter(source__in=sources)
         self.form = curry(BuffForm, sources=sources)

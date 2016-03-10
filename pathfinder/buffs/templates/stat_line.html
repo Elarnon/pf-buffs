@@ -1,7 +1,7 @@
 {% for stat in stats %}
 {% if not forloop.first %}; {% endif %}
 {{ stat.name }}
-{% if stat.value != 0 %}
+{% if stat.detail %}
 <abbr title="{% for typ in stat.detail %}{% if typ.value >= 0 %}+{% endif %}{{ typ.value }} {% if typ.name %}{{ typ.name }} {% endif %}{% endfor %}">{% if stat.value >= 0 %}+{{ stat.value }}{% else %}{{ stat.value }}{% endif %}</abbr>
 {% endif %}
 {% if stat.constraints %}

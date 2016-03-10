@@ -70,14 +70,18 @@ class Character(models.Model):
         return self.name + (" (mort-vivant)" if self.undead else "")
 
     def buffs(self):
-        return Source.objects.filter(buff__active=True, buff__characters=self)
+        return [buff.source for buff in self.buff_set.all() if buff.active]
 
     def make_stats(self, sources):
         fn = None
         if self.undead:
             fn = lambda typ: typ['name'] != 'Moral'
-        return make_stats([v for k, v in sources.items()
-                                   if k in {buff.source_id for buff in self.buff_set.all()}], fn)
+        my_sources = [
+            v
+            for k, v in sources.items()
+            if k in {buff.source_id for buff in self.buff_set.all() if buff.active}
+        ]
+        return make_stats(my_sources, fn)
 
     def end_turn(self):
         Buff.objects.filter(active=True, source__author=self, duration__lte=0).update(active=False)

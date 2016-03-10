@@ -61,6 +61,7 @@ def compute_constrained(stats):
             continue
 
         baseline = stat['constraints'][None]
+        
         emptyconstraints = set()
         for cid, constraint in stat['constraints'].items():
             if constraint['name'] is None:
@@ -76,12 +77,11 @@ def compute_constrained(stats):
                     todelete.add(tid)
             for tid in todelete:
                 del constraint['typs'][tid]
-            if constraint['name'] == 'vs Humains':
-                print(constraint['typs'])
             if not constraint['typs']:
                 emptyconstraints.add(cid)
         for cid in emptyconstraints:
             del stat['constraints'][cid]
+    return [stat for stat in stats if stat['constraints']]
 
 def combine_sources(sources):
     combined_stats = {}
@@ -106,7 +106,17 @@ def combine_sources(sources):
                     else:
                         combined_typ['value'] = max(combined_typ['value'], typ['value'])
 
-    return combined_stats
+
+    for stat in combined_stats.values():
+        todelete = set()
+        for cid, constraint in stat['constraints'].items():
+            constraint['typs'] = { tid: typ for tid, typ in constraint['typs'].items() if typ['value'] != 0 }
+            if not constraint['typs']:
+                todelete.add(cid)
+        for cid in todelete:
+            del stat['constraints'][cid]
+
+    return [stat for stat in combined_stats.values() if stat['constraints']]
 
 def cleanup(stats):
     return [
@@ -133,9 +143,11 @@ def format_stats(stats):
         for stat in stats
     ]
 
-def make_stats(sources, fn=None):
-    stats = combine_sources(sources).values()
+def make_stats(sources, fn=None, pr=False):
+    stats = combine_sources(sources)
     if fn is not None:
         stats = filter_typs(stats, fn)
-    compute_constrained(stats)
+    stats = compute_constrained(stats)
+    if pr:
+        print(stats)
     return format_stats(stats)

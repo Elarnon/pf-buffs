@@ -27,6 +27,7 @@
 
 	  {% if user.is_authenticated %}
 	  <ul class="nav navbar-nav navbar-right">
+	    <li><a href="{% url 'admin:index' %}">Administration</a></li>
 	    <li><a href="{% url 'logout' %}?next={{ request.get_full_path|urlencode }}">Se déconnecter ({{ user }})</a></li>
 	  </ul>
 	  {% else %}
@@ -45,7 +46,8 @@
 	</div>
       </nav>
     </header>
-    <div class="container-fluid">
+    <div class="con
+tainer-fluid">
       {% block contents %}
       {% endblock %}
     </div>
