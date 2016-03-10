@@ -1,6 +1,9 @@
 from django.test import TestCase
 
-from .models import Character, Source, Stat, Buff, Bonus, BonusType, Constraint
+from .models import Character, Source, Stat, Buff, Bonus, BonusType, Constraint, build_stats
+
+def get_stats(character):
+    return character.make_stats(build_stats(Source.objects.select_related('author')))
 
 class SingleStatTests(TestCase):
     def setUp(self):
@@ -20,7 +23,7 @@ class SingleStatTests(TestCase):
         Buff.objects.create(source=self.source1, duration=1, active=True).characters.add(self.character)
 
         self.assertEqual(
-            self.character.raw_stats(),
+            get_stats(self.character),
             {}
         )
     
@@ -31,13 +34,13 @@ class SingleStatTests(TestCase):
         Bonus.objects.create(source=self.source1, stat=self.stat, value=1, typ=self.stacking_type)
 
         self.assertEqual(
-            self.character.raw_stats(),
+            get_stats(self.character),
             {'Attaque': {'detail': [('Stacking', 1)], 'value': 1, 'constraints': []}})
         
         Bonus.objects.create(source=self.source1, stat=self.stat, value=1, typ=self.nonstacking_type)
         
         self.assertEqual(
-            self.character.raw_stats(),
+            get_stats(self.character),
             {'Attaque': {'detail': [('Nonstacking', 1), ('Stacking', 1)], 'value': 2, 'constraints': []}})
 
     def test_unconstrained_same_source_dont_stack(self):
@@ -48,7 +51,7 @@ class SingleStatTests(TestCase):
         b2 = Bonus.objects.create(source=self.source1, stat=self.stat, value=1, typ=self.stacking_type)
 
         self.assertEqual(
-            self.character.raw_stats(),
+            get_stats(self.character),
             {'Attaque': {'detail': [('Stacking', 1)], 'value': 1, 'constraints': []}})
 
         # Nonstacking bonuses
@@ -58,7 +61,7 @@ class SingleStatTests(TestCase):
         b2.save()
         
         self.assertEqual(
-            self.character.raw_stats(),
+            get_stats(self.character),
             {'Attaque': {'detail': [('Nonstacking', 1)], 'value': 1, 'constraints': []}})
     
     def test_unconstrained_stacking_different_sources_stack(self):
@@ -69,7 +72,7 @@ class SingleStatTests(TestCase):
         b2 = Bonus.objects.create(source=self.source2, stat=self.stat, value=1, typ=self.stacking_type)
 
         self.assertEqual(
-            self.character.raw_stats(),
+            get_stats(self.character),
             {'Attaque': {'detail': [('Stacking', 2)], 'value': 2, 'constraints': []}})
     
     def test_unconstrained_nonstacking_different_sources_dont_stack(self):
@@ -82,7 +85,7 @@ class SingleStatTests(TestCase):
         b2 = Bonus.objects.create(source=self.source2, stat=self.stat, value=1, typ=typ)
 
         self.assertEqual(
-            self.character.raw_stats(),
+            get_stats(self.character),
             {'Attaque': {'detail': [('Nonstacking', 1)], 'value': 1, 'constraints': []}})
 
     def test_unconstrained_constrained_same_source_override(self):
@@ -92,14 +95,14 @@ class SingleStatTests(TestCase):
         b = Bonus.objects.create(source=self.source1, stat=self.stat, value=3, typ=self.stacking_type, constraint=self.constraint)
 
         self.assertEqual(
-            self.character.raw_stats(),
+            get_stats(self.character),
             {'Attaque': {'detail': [('Stacking', 2)], 'value': 2, 'constraints': [('Constraint', [('Stacking', 1)])]}})
 
         b.value = 1
         b.save()
         
         self.assertEqual(
-            self.character.raw_stats(),
+            get_stats(self.character),
             {'Attaque': {'detail': [('Stacking', 2)], 'value': 2, 'constraints': [('Constraint', [('Stacking', -1)])]}})
 
     def test_constrained(self):
@@ -110,7 +113,7 @@ class SingleStatTests(TestCase):
         Buff.objects.create(source=self.source2, duration=1, active=True).characters.add(self.character)
 
         self.assertEqual(
-            self.character.raw_stats(),
+            get_stats(self.character),
             {'Attaque': {'detail': [], 'value': 0, 'constraints': [('Constraint', [('Nonstacking', 10), ('Stacking', 10)])]}})
 
     def test_unconstrained_constrained_same_source(self):
@@ -121,7 +124,7 @@ class SingleStatTests(TestCase):
 
         Buff.objects.create(source=self.source1, duration=1, active=True).characters.add(self.character)
 
-        self.assertEqual(self.character.raw_stats(),
+        self.assertEqual(get_stats(self.character),
             {'Attaque': {'detail': [('Nonstacking', 1), ('Stacking', 1)], 'value': 2, 'constraints': [('Constraint', [('Nonstacking', 9), ('Stacking', 9)])]}})
 
     def test_ignore_small_constraints(self):
@@ -130,7 +133,7 @@ class SingleStatTests(TestCase):
         
         Buff.objects.create(source=self.source1, duration=1, active=True).characters.add(self.character)
 
-        self.assertEqual(self.character.raw_stats(),
+        self.assertEqual(get_stats(self.character),
             {'Attaque': {'detail': [('Stacking', 1)], 'value': 1, 'constraints': []}})
 
     def test_ignore_inactive(self):
@@ -139,43 +142,43 @@ class SingleStatTests(TestCase):
         buff = Buff.objects.create(source=self.source1, duration=1, active=True)
         buff.characters.add(self.character)
 
-        self.assertEqual(self.character.raw_stats(),
+        self.assertEqual(get_stats(self.character),
             {'Attaque': {'detail': [('Stacking', 1)], 'value': 1, 'constraints': []}})
 
         buff.active = False
         buff.save()
 
-        self.assertEqual(self.character.raw_stats(),
+        self.assertEqual(get_stats(self.character),
             {}
         )
         
         Buff.objects.create(source=self.source1, duration=1, active=True).characters.add(self.character)
 
-        self.assertEqual(self.character.raw_stats(),
+        self.assertEqual(get_stats(self.character),
             {'Attaque': {'detail': [('Stacking', 1)], 'value': 1, 'constraints': []}})
 
     def test_untyped(self):
         Bonus.objects.create(source=self.source1, stat=self.stat, value=1)
         Buff.objects.create(source=self.source1, duration=1, active=True).characters.add(self.character)
 
-        self.assertEqual(self.character.raw_stats(),
-                         {'Attaque': { 'value': 1, 'constraints': [], 'detail': [('', 1)] } })
+        self.assertEqual(get_stats(self.character),
+                         [{ 'name': 'Attaque', 'value': 1, 'constraints': [], 'detail': [{ 'name': None, 'value': 1 }] }])
         
         Bonus.objects.create(source=self.source1, stat=self.stat, value=1, constraint=self.constraint)
-        self.assertEqual(self.character.raw_stats(),
-                         {'Attaque': { 'value': 1, 'constraints': [], 'detail': [('', 1)] } })
+        self.assertEqual(get_stats(self.character),
+                         [{ 'name': 'Attaque', 'value': 1, 'constraints': [], 'detail': [{ 'name': None, 'value': 1 }] }])
 
     def test_malus(self):
         Bonus.objects.create(source=self.source1, stat=self.stat, value=-1)
         Buff.objects.create(source=self.source1, duration=1, active=True).characters.add(self.character)
         
-        self.assertEqual(self.character.raw_stats(),
+        self.assertEqual(get_stats(self.character),
                          {'Attaque': {'value': -1, 'constraints': [], 'detail': [('', -1)]}})
         
         Buff.objects.create(source=self.source2, duration=1, active=True).characters.add(self.character)
         Bonus.objects.create(source=self.source2, stat=self.stat, value=1)
 
-        self.assertEqual(self.character.raw_stats(), {})
+        self.assertEqual(get_stats(self.character), {})
 
     def test_nonstacking_constraint(self):
         # Source 1 gives +1 Nonstacking and +1 additional Nonstacking Constraint
@@ -187,14 +190,14 @@ class SingleStatTests(TestCase):
         Buff.objects.create(source=self.source1, duration=1, active=True).characters.add(self.character)
         Buff.objects.create(source=self.source2, duration=1, active=True).characters.add(self.character)
 
-        self.assertEqual(self.character.raw_stats(),
+        self.assertEqual(get_stats(self.character),
             {'Attaque': {'detail': [('Nonstacking', 3)], 'value': 3, 'constraints': []}})
 
         # Now Source 1 gives +4 total for Nonstacking Constraint
         constrained.value = 4
         constrained.save()
         
-        self.assertEqual(self.character.raw_stats(),
+        self.assertEqual(get_stats(self.character),
             {'Attaque': {'detail': [('Nonstacking', 3)], 'value': 3, 'constraints': [('Constraint', [('Nonstacking', 1)])]}})
     
     def test_stacking_constraint(self):
@@ -207,12 +210,12 @@ class SingleStatTests(TestCase):
         Buff.objects.create(source=self.source1, duration=1, active=True).characters.add(self.character)
         Buff.objects.create(source=self.source2, duration=1, active=True).characters.add(self.character)
 
-        self.assertEqual(self.character.raw_stats(),
+        self.assertEqual(get_stats(self.character),
             {'Attaque': {'detail': [('Stacking', 4)], 'value': 4, 'constraints': [('Constraint', [('Stacking', 1)])]}})
 
         # Now Source 1 gives +3 additional for stacking Constraint
         constrained.value = 4
         constrained.save()
         
-        self.assertEqual(self.character.raw_stats(),
+        self.assertEqual(get_stats(self.character),
             {'Attaque': {'detail': [('Stacking', 4)], 'value': 4, 'constraints': [('Constraint', [('Stacking', 3)])]}})

@@ -10,6 +10,8 @@ from django.db.models import Q
 
 from .forms import BuffForm, BaseBuffFormSet
 
+from .utils import build_stats
+
 from django import forms
 
 def test(request):
@@ -29,8 +31,6 @@ class CharacterListView(ListView):
     model = Character
 
 def index(request):
-    characters = Character.objects.all()
-
     BuffFormSet = forms.modelformset_factory(Buff, fields=('source', 'characters', 'duration', 'active'), formset=BaseBuffFormSet, can_delete=True)
 
     if request.user.is_authenticated():
@@ -50,22 +50,21 @@ def index(request):
     else:
         formset = None
 
-    names = set()
-    sources = Source.objects.all()
-    for source in sources:
-        source.cached_stats = {
-            stat['name']: stat for stat in source.stats()
-        }
-        names |= source.cached_stats.keys()
+    sources = Source.objects.select_related('author')
+    source_stats = build_stats(sources)
 
-    source_stats = [
-        (name, [source.cached_stats.get(name, None) for source in sources])
-        for name in sorted(names)
-    ]
+    characters = Character.objects.all().prefetch_related('buff_set', 'players')
+
+    for character in characters:
+        character.formatted_stats = character.make_stats(source_stats)
+        if character.name == 'Georges':
+            print(character.formatted_stats)
+
+    for source in sources:
+        source.formatted_stats = source.make_stats(source_stats)
 
     return render(request, 'buffs/index.html', {
         'characters': characters,
         'buffs_formset': formset,
         'sources': sources,
-        'source_stats': source_stats
     })
