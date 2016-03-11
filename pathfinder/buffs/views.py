@@ -17,7 +17,7 @@ from django import forms
 BuffFormSet = forms.modelformset_factory(Buff, fields=('source', 'characters', 'duration', 'active'), formset=BaseBuffFormSet, can_delete=True)
 
 def index(request):
-    if request.method == 'POST' and 'end-turn' in request.POST:
+    if request.method == 'POST' and request.user.is_authenticated() and 'end-turn' in request.POST:
         end_turn = int(request.POST['end-turn'])
         try:
             Character.objects.get(pk=end_turn).end_turn()
