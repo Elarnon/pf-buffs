@@ -33,13 +33,14 @@ class Source(models.Model):
     author = models.ForeignKey('Character', blank=True, null=True, verbose_name="Auteur")
     level_dependent = models.BooleanField(default=False, verbose_name="Dépend du niveau")
     stats = models.ManyToManyField(Stat, through='Bonus')
+    link = models.URLField(blank=True)
 
 
     def make_stats(self, sources):
         return make_stats([sources[self.pk]])
 
     def __str__(self):
-        return self.name_fr + (' [{}]'.format(self.author.name) if self.author else '')
+        return self.name_fr
 
 class Bonus(models.Model):
     source = models.ForeignKey(Source)
@@ -67,10 +68,10 @@ class Character(models.Model):
     players = models.ManyToManyField('auth.User', blank=True)
 
     def __str__(self):
-        return self.name + (" (mort-vivant)" if self.undead else "")
+        return self.name
 
     def buffs(self):
-        return [buff.source for buff in self.buff_set.all() if buff.active]
+        return [buff for buff in self.buff_set.all() if buff.active]
 
     def make_stats(self, sources):
         fn = None

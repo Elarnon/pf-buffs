@@ -1,11 +1,11 @@
-{% for stat in stats %}
+{% for stat in stats|dictsort:"name" %}
 {% if not forloop.first %}; {% endif %}
 {{ stat.name }}
 {% if stat.detail %}
 <abbr title="{% for typ in stat.detail %}{% if typ.value >= 0 %}+{% endif %}{{ typ.value }} {% if typ.name %}{{ typ.name }} {% endif %}{% endfor %}">{% if stat.value >= 0 %}+{{ stat.value }}{% else %}{{ stat.value }}{% endif %}</abbr>
 {% endif %}
 {% if stat.constraints %}
-{% if stat.value != 0 %}({% endif %}{% for constraint in stat.constraints %}{% if not forloop.first %}, {% endif %}<abbr
+{% if stat.value != 0 %}({% endif %}{% for constraint in stat.constraints|dictsort:"name" %}{% if not forloop.first %}, {% endif %}<abbr
 														      title="{% for typ in constraint.detail %}{% if typ.value >= 0 %}+{% endif %}{{ typ.value }} {% if typ.name %}{{ typ.name }} {% endif %}{% endfor %}">{% if constraint.value >= 0%}+{% endif %}{{ constraint.value }}</abbr>
 {{ constraint.name }}{% endfor %}{% if stat.value != 0 %}){% endif %}
 {% endif %}

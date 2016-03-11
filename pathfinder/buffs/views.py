@@ -14,55 +14,75 @@ from .utils import build_stats
 
 from django import forms
 
-def test(request):
-    if request.method == 'POST':
-        formset = BuffFormSet(request.POST, request.FILES)
-        if formset.is_valid():
-            pass
-    else:
-        formset = BuffFormSet()
-
-    return render(request, 'buffs/buff_form.html', { 'formset': formset })
-
-class CharacterView(DetailView):
-    model = Character
-
-class CharacterListView(ListView):
-    model = Character
+BuffFormSet = forms.modelformset_factory(Buff, fields=('source', 'characters', 'duration', 'active'), formset=BaseBuffFormSet, can_delete=True)
 
 def index(request):
-    BuffFormSet = forms.modelformset_factory(Buff, fields=('source', 'characters', 'duration', 'active'), formset=BaseBuffFormSet, can_delete=True)
+    if request.method == 'POST' and 'end-turn' in request.POST:
+        end_turn = int(request.POST['end-turn'])
+        try:
+            Character.objects.get(pk=end_turn).end_turn()
+            return redirect(reverse('index'))
+        except ObjectDoesNotExist:
+            pass
 
     if request.user.is_authenticated():
-        if request.method == 'POST':
-            formset = BuffFormSet(request.POST, request.FILES, user=request.user)
+        managed = request.user.character_set.all()
+    else:
+        managed = []
+    for character in managed:
+        assert(request.user.is_authenticated)
+
+        if request.method == 'POST' and request.POST['buff-source'] == str(character.id):
+            formset = BuffFormSet(request.POST, request.FILES, character=character)
             if formset.is_valid():
                 formset.save()
-                if 'end-turn' in request.POST:
-                    end_turn = int(request.POST['end-turn'])
-                    try:
-                        Character.objects.get(pk=end_turn).end_turn()
-                    except ObjectDoesNotExist:
-                        pass
                 return redirect(reverse('index'))
+            character.formset = formset
         else:
-            formset = BuffFormSet(user=request.user)
-    else:
-        formset = None
+            character.formset = BuffFormSet(character=character)
 
     sources = Source.objects.select_related('author')
     source_stats = build_stats(sources)
 
     characters = Character.objects.all().prefetch_related('buff_set', 'buff_set__source', 'buff_set__source__author', 'players')
 
-    for character in characters:
-        character.formatted_stats = character.make_stats(source_stats)
+    sources = {
+        source.id: {
+            'name': source.name_fr,
+            'link': source.link,
+            'author_id': source.author_id,
+            'author': source.author.name,
+            'level_dependent': source.level_dependent,
+            'stats': source.make_stats(source_stats)
+        }
+        for source in sources
+    }
 
-    for source in sources:
-        source.formatted_stats = source.make_stats(source_stats)
+    characters = [
+        {
+            'stats': character.make_stats(source_stats),
+            'id': character.id,
+            'name': character.name,
+            'buffs': [
+                {
+                    'duration': buff.duration,
+                    'source': sources[buff.source_id]
+                }
+                for buff in character.buffs()
+            ]
+        }
+        for character in characters
+    ]
 
     return render(request, 'buffs/index.html', {
-        'characters': characters,
-        'buffs_formset': formset,
-        'sources': sources,
+        'managed_characters': [character.id for character in managed],
+        'formsets': [
+            {
+                'id': character.id,
+                'name': character.name,
+                'formset': character.formset
+            } for character in managed
+        ],
+        'characters': sorted(characters, key=lambda x: x['name']),
+        'sources': sorted(sources.values(), key=lambda x: (x['author'], x['name'])),
     })

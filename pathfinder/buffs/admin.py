@@ -6,8 +6,11 @@ from .models import BonusType, Stat, Constraint, Source, Bonus, Character, Buff
 class BonusInline(admin.TabularInline):
     model = Bonus
 
+class BuffInline(admin.TabularInline):
+    model = Buff
+
 class SourceAdmin(admin.ModelAdmin):
-    inlines = (BonusInline,)
+    inlines = (BonusInline, BuffInline)
 
 class CharacterAdmin(admin.ModelAdmin):
     pass
