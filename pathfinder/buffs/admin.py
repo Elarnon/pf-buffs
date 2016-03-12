@@ -20,9 +20,3 @@ class ConstraintAdmin(admin.ModelAdmin):
 
 class StatAdmin(admin.ModelAdmin):
     pass
-
-admin.site.register(BonusType)
-admin.site.register(Constraint, ConstraintAdmin)
-admin.site.register(Stat, StatAdmin)
-admin.site.register(Source, SourceAdmin)
-admin.site.register(Character, CharacterAdmin)
