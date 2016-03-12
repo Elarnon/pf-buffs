@@ -33,7 +33,7 @@
 	  </td>
 	  <td>{% for buff in character.buffs %}
 	    {% if not forloop.first %}; {% endif %}
-	    {{ buff.source.name }} [{{ buff.source.author }}] ({{ buff.duration }} tours)
+	    {{ buff.source.name }} [{{ buff.source.author }}] ({{ buff.duration }} tours restant)
 	    {% endfor %}
 	  </td>
 	</tr>
@@ -67,7 +67,7 @@
 	  <tr>
 	    <th></th>
 	    <th>Cibles</th>
-	    <th>Dur&eacute;e (tours)</th>
+	    <th>Temps restant</th>
 	    <th>Actif&nbsp;?</th>
 	    <th></th>
 	  </tr>
@@ -102,7 +102,7 @@
 		{% endfor %}
 	      </div>
 	    </td>
-	    <td>{% bootstrap_field field=form.duration show_label=False %}</td>
+	    <td>{% bootstrap_field field=form.duration show_label=False addon_after="tours" %}</td>
 	    <td class="text-center">
 	      <label>
 		<span class="fa fa-smile-o text-success"></span>
