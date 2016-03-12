@@ -11,6 +11,10 @@ class BonusType(models.Model):
     name_en = models.CharField(max_length=255, verbose_name="Nom (EN)", unique=True, blank=False, null=False)
     stacks = models.BooleanField(default=False)
 
+    class Meta:
+        verbose_name = "Type de bonus"
+        verbose_name_plural = "Types de bonus"
+
     def __str__(self):
         if self.stacks:
             return '{} ({}, stacks)'.format(self.name_fr, self.name_en)
@@ -19,11 +23,17 @@ class BonusType(models.Model):
 class Stat(models.Model):
     name_fr = models.CharField(max_length=255, verbose_name="Nom (FR)", blank=False, null=False)
 
+    class Meta:
+        verbose_name = "Statistique"
+
     def __str__(self):
         return self.name_fr
 
 class Constraint(models.Model):
     name_fr = models.CharField(max_length=255, verbose_name="Nom (FR)", blank=True, null=False)
+
+    class Meta:
+        verbose_name = "Restriction"
 
     def __str__(self):
         return self.name_fr
@@ -35,6 +45,8 @@ class Source(models.Model):
     stats = models.ManyToManyField(Stat, through='Bonus')
     link = models.URLField(blank=True)
 
+    class Meta:
+        verbose_name = "Effet"
 
     def make_stats(self, sources):
         return make_stats([sources[self.pk]])
@@ -67,6 +79,9 @@ class Character(models.Model):
     undead = models.BooleanField(default=False)
     players = models.ManyToManyField('auth.User', blank=True)
 
+    class Meta:
+        verbose_name = "Personnage"
+
     def __str__(self):
         return self.name
 
@@ -89,9 +104,9 @@ class Character(models.Model):
         Buff.objects.filter(active=True, source__author=self, duration__gt=0).update(duration=F('duration')-1)
 
 class Buff(models.Model):
-    characters = models.ManyToManyField(Character)
+    characters = models.ManyToManyField(Character, verbose_name='Cibles')
     source = models.ForeignKey(Source)
-    duration = models.IntegerField(null=True)
+    duration = models.IntegerField(null=True, verbose_name='Durée (tours)')
     active = models.BooleanField(default=True)
 
     def __str__(self):
