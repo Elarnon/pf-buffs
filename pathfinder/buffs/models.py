@@ -75,9 +75,9 @@ class Bonus(models.Model):
         ])
 
 class Character(models.Model):
-    name = models.CharField(max_length=255)
-    undead = models.BooleanField(default=False)
-    players = models.ManyToManyField('auth.User', blank=True)
+    name = models.CharField(max_length=255, verbose_name='Nom')
+    undead = models.BooleanField(default=False, verbose_name='Mort-vivant')
+    players = models.ManyToManyField('auth.User', blank=True, verbose_name='Joueurs')
 
     class Meta:
         verbose_name = "Personnage"

@@ -11,12 +11,20 @@ class BuffInline(admin.StackedInline):
 
 class SourceAdmin(admin.ModelAdmin):
     inlines = (BonusInline, BuffInline)
+    list_display = ('name_fr', 'author', 'level_dependent')
+    list_filter = ('author',)
 
 class CharacterAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('name', 'undead')
+    list_filter = ('players',)
 
 class ConstraintAdmin(admin.ModelAdmin):
     pass
 
 class StatAdmin(admin.ModelAdmin):
     pass
+
+class BonusTypeAdmin(admin.ModelAdmin):
+    list_display = ('name_en', 'name_fr', 'stacks')
+    list_display_links = ('name_en',)
+    list_editable = ('name_fr',)

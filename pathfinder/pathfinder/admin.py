@@ -19,7 +19,7 @@ site.register(Group)
 
 from buffs.admin import *
 
-site.register(BonusType)
+site.register(BonusType, BonusTypeAdmin)
 site.register(Constraint, ConstraintAdmin)
 site.register(Stat, StatAdmin)
 site.register(Source, SourceAdmin)
